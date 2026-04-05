@@ -319,6 +319,8 @@ class ProofreadService(private val context: Context) {
         return proofread(text, overridePrompt = prompt)
     }
 
+    suspend fun cleanupVoiceTranscript(transcript: String): Result<String> = Result.success(transcript)
+
     /**
      * Run T5 encoder-decoder inference.
      */

@@ -448,6 +448,9 @@
     <string name="translate_success">Text translated</string>
     <string name="translate_error">Translation failed: %s</string>
     <string name="translate_no_text">No text to translate</string>
+    <string name="voice_input_permission_required">Microphone permission is required for voice input. Enable it in app settings.</string>
+    <string name="voice_input_not_available">Speech recognition is not available on this device.</string>
+    <string name="voice_input_error">Voice input failed</string>
     <string name="translate_target_language_title">Translation target language</string>
     <string name="translate_target_language_summary">Select the language to translate to</string>
     

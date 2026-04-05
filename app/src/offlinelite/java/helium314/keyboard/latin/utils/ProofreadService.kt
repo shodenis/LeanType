@@ -64,6 +64,8 @@ class ProofreadService(private val context: Context) {
 
     suspend fun translate(text: String): Result<String> = Result.failure(Exception("Not supported in Lite version"))
 
+    suspend fun cleanupVoiceTranscript(transcript: String): Result<String> = Result.success(transcript)
+
     companion object {
         val AVAILABLE_MODELS = emptyList<String>()
     }

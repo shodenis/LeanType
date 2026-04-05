@@ -224,6 +224,34 @@ class ProofreadService(private val context: Context) {
         }
     }
 
+    /**
+     * Post-process voice transcript via MiMo (OpenAI-compatible) when provider is MIMO and token is set.
+     * Otherwise returns the transcript unchanged. Uses max_tokens = 2048 for longer dictation.
+     */
+    suspend fun cleanupVoiceTranscript(transcript: String): Result<String> = withContext(Dispatchers.IO) {
+        if (transcript.isBlank()) {
+            return@withContext Result.failure(
+                ProofreadException(context.getString(R.string.proofread_no_text))
+            )
+        }
+        if (getProvider() != AIProvider.MIMO) {
+            return@withContext Result.success(transcript)
+        }
+        val token = getMimoToken()
+        if (token == null) {
+            return@withContext Result.success(transcript)
+        }
+        val prompt = "$VOICE_CLEANUP_PROMPT\n\nTranscript:\n$transcript"
+        openAiCompatibleChatRequest(
+            prompt = prompt,
+            modelName = MIMO_MODEL,
+            token = token,
+            endpointUrl = MIMO_ENDPOINT,
+            maxTokens = MIMO_VOICE_CLEANUP_MAX_TOKENS,
+            showThinking = false
+        )
+    }
+
     // ======================== Gemini Implementation ========================
 
     private suspend fun geminiProofread(text: String, overridePrompt: String?): Result<String> {
@@ -393,31 +421,48 @@ class ProofreadService(private val context: Context) {
             )
         }
 
+        return openAiCompatibleChatRequest(
+            prompt = prompt,
+            modelName = modelName,
+            token = token,
+            endpointUrl = endpointUrl,
+            maxTokens = DEFAULT_CHAT_MAX_TOKENS,
+            showThinking = showThinking
+        )
+    }
+
+    private fun openAiCompatibleChatRequest(
+        prompt: String,
+        modelName: String,
+        token: String,
+        endpointUrl: String,
+        maxTokens: Int,
+        showThinking: Boolean
+    ): Result<String> {
         val url = URL(endpointUrl)
         val connection = url.openConnection() as HttpURLConnection
-        
+
         return try {
             connection.requestMethod = "POST"
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Authorization", "Bearer $token")
-            
+
             connection.doOutput = true
             connection.connectTimeout = 30000
             connection.readTimeout = 60000
 
-            // Build OpenAI-compatible request body (works with Groq, OpenRouter, etc.)
             val messagesArray = JSONArray().apply {
                 put(JSONObject().apply {
                     put("role", "user")
                     put("content", prompt)
                 })
             }
-            
+
             val requestBody = JSONObject().apply {
                 put("model", modelName)
                 put("messages", messagesArray)
                 put("temperature", 0.1)
-                put("max_tokens", 512)
+                put("max_tokens", maxTokens)
             }
 
             OutputStreamWriter(connection.outputStream).use { writer ->
@@ -509,7 +554,11 @@ class ProofreadService(private val context: Context) {
         private const val GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
         private const val MIMO_ENDPOINT = "https://api.xiaomimimo.com/v1/chat/completions"
         private const val MIMO_MODEL = "mimo-v2-flash"
-        
+        private const val DEFAULT_CHAT_MAX_TOKENS = 512
+        private const val MIMO_VOICE_CLEANUP_MAX_TOKENS = 2048
+        private const val VOICE_CLEANUP_PROMPT =
+            "Remove filler words, fix punctuation, format text. Keep original language. Return only cleaned text."
+
         val AVAILABLE_MODELS = listOf(
             "gemini-2.5-flash",
             "gemini-2.5-pro",
