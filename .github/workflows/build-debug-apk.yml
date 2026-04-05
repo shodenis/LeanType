@@ -19,7 +19,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - uses: gradle/actions/setup-gradle@v3
+      # Wrapper bootstraps Gradle; avoids setup-gradle distribution verify + cache flakes.
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
