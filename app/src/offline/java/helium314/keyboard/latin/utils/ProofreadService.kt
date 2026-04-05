@@ -189,7 +189,7 @@ class ProofreadService(private val context: Context) {
 
     // AI Provider support (API compatibility)
     enum class AIProvider {
-        GEMINI, GROQ, OPENAI
+        GEMINI, GROQ, OPENAI, MIMO
     }
     
     fun getProvider(): AIProvider = AIProvider.GROQ
@@ -213,6 +213,9 @@ class ProofreadService(private val context: Context) {
 
     fun getGroqModel(): String = "Offline Mode"
     fun setGroqModel(model: String) { /* No-op */ }
+
+    fun getMimoToken(): String? = null
+    fun setMimoToken(token: String?) { /* No-op */ }
 
     // Model management - encoder path
     fun getModelPath(): String? = prefs.getString(KEY_ENCODER_PATH, null)

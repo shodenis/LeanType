@@ -32,7 +32,7 @@ import java.net.URL
 class ProofreadService(private val context: Context) {
 
     enum class AIProvider {
-        GEMINI, GROQ, OPENAI
+        GEMINI, GROQ, OPENAI, MIMO
     }
 
     private val securePrefs: SharedPreferences by lazy {
@@ -141,7 +141,8 @@ class ProofreadService(private val context: Context) {
         // If provider is GROQ, always use GROQ_ENDPOINT. 
         // We don't want a saved OpenAI endpoint to override it.
         if (provider == AIProvider.GROQ) return GROQ_ENDPOINT
-        
+        if (provider == AIProvider.MIMO) return MIMO_ENDPOINT
+
         val defaultEndpoint = DEFAULT_HF_ENDPOINT
         return securePrefs.getString(KEY_HF_ENDPOINT, defaultEndpoint) ?: defaultEndpoint
     }
@@ -201,7 +202,7 @@ class ProofreadService(private val context: Context) {
 
         when (getProvider()) {
             AIProvider.GEMINI -> geminiProofread(text, overridePrompt)
-            AIProvider.GROQ, AIProvider.OPENAI -> huggingFaceProofread(text, overridePrompt, showThinking)
+            AIProvider.GROQ, AIProvider.OPENAI, AIProvider.MIMO -> huggingFaceProofread(text, overridePrompt, showThinking)
         }
     }
 
@@ -219,7 +220,7 @@ class ProofreadService(private val context: Context) {
 
         when (getProvider()) {
             AIProvider.GEMINI -> geminiTranslate(text)
-            AIProvider.GROQ, AIProvider.OPENAI -> huggingFaceTranslate(text)
+            AIProvider.GROQ, AIProvider.OPENAI, AIProvider.MIMO -> huggingFaceTranslate(text)
         }
     }
 
@@ -339,26 +340,60 @@ class ProofreadService(private val context: Context) {
         securePrefs.edit().putString(KEY_GROQ_MODEL, model.trim()).apply()
     }
 
+    fun getMimoToken(): String? = securePrefs.getString(KEY_MIMO_TOKEN, null)?.takeIf { it.isNotBlank() }
+
+    fun setMimoToken(token: String?) {
+        securePrefs.edit().apply {
+            if (token.isNullOrBlank()) {
+                remove(KEY_MIMO_TOKEN)
+            } else {
+                putString(KEY_MIMO_TOKEN, token.trim())
+            }
+            apply()
+        }
+    }
+
     // ======================== HuggingFace/Groq Implementation ========================
 
     private fun huggingFaceRequest(prompt: String, showThinking: Boolean = false): Result<String> {
-        val isGroq = getProvider() == AIProvider.GROQ
-        val modelName = if (isGroq) getGroqModel() else getHuggingFaceModel()
-        
+        val provider = getProvider()
+        val modelName: String
+        val token: String?
+        val endpointUrl: String
+        when (provider) {
+            AIProvider.GROQ -> {
+                modelName = getGroqModel()
+                token = getGroqToken()
+                endpointUrl = GROQ_ENDPOINT
+            }
+            AIProvider.MIMO -> {
+                modelName = MIMO_MODEL
+                token = getMimoToken()
+                endpointUrl = MIMO_ENDPOINT
+            }
+            AIProvider.OPENAI -> {
+                modelName = getHuggingFaceModel()
+                token = getHuggingFaceToken()
+                endpointUrl = getHuggingFaceEndpoint()
+            }
+            AIProvider.GEMINI -> {
+                return Result.failure(ProofreadException("Gemini does not use chat completions"))
+            }
+        }
+
         if (modelName.isBlank()) {
             return Result.failure(
                 ProofreadException(context.getString(R.string.huggingface_no_model))
             )
         }
 
-        val token = if (isGroq) getGroqToken() else getHuggingFaceToken()
         if (token == null) {
             return Result.failure(
                 ProofreadException(context.getString(R.string.huggingface_no_token))
             )
         }
 
-        val url = URL(getHuggingFaceEndpoint())
+        val url = URL(endpointUrl)
         val connection = url.openConnection() as HttpURLConnection
         
         return try {
@@ -467,10 +502,13 @@ class ProofreadService(private val context: Context) {
         private const val KEY_HF_ENDPOINT = "huggingface_endpoint"
         private const val KEY_GROQ_TOKEN = "groq_token"
         private const val KEY_GROQ_MODEL = "groq_model"
+        private const val KEY_MIMO_TOKEN = "mimo_token"
         private const val DEFAULT_TARGET_LANGUAGE = "English"
         private const val DEFAULT_HF_MODEL = "gpt-4o-mini"
         private const val DEFAULT_HF_ENDPOINT = "https://api.openai.com/v1/chat/completions"
         private const val GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
+        private const val MIMO_ENDPOINT = "https://api.xiaomimimo.com/v1/chat/completions"
+        private const val MIMO_MODEL = "mimo-v2-flash"
         
         val AVAILABLE_MODELS = listOf(
             "gemini-2.5-flash",

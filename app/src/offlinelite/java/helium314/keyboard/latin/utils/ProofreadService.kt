@@ -13,7 +13,7 @@ import android.content.Context
 class ProofreadService(private val context: Context) {
 
     enum class AIProvider {
-        GEMINI, GROQ, OPENAI
+        GEMINI, GROQ, OPENAI, MIMO
     }
 
     // Always returns GEMINI as default, but methods do nothing
@@ -54,6 +54,9 @@ class ProofreadService(private val context: Context) {
 
     fun getGroqModel(): String = "Lite Mode"
     fun setGroqModel(model: String) { /* No-op */ }
+
+    fun getMimoToken(): String? = null
+    fun setMimoToken(token: String?) { /* No-op */ }
 
     suspend fun testApiKey(): Result<String> = Result.failure(Exception("Not supported in Lite version"))
 

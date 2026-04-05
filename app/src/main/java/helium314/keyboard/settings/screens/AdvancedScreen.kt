@@ -307,7 +307,8 @@ fun createAdvancedSettings(context: Context) = listOfNotNull(
         val items = listOf(
             ctx.getString(R.string.ai_provider_huggingface) to helium314.keyboard.latin.utils.ProofreadService.AIProvider.GROQ.name,
             ctx.getString(R.string.ai_provider_gemini) to helium314.keyboard.latin.utils.ProofreadService.AIProvider.GEMINI.name,
-            ctx.getString(R.string.ai_provider_openai) to helium314.keyboard.latin.utils.ProofreadService.AIProvider.OPENAI.name
+            ctx.getString(R.string.ai_provider_openai) to helium314.keyboard.latin.utils.ProofreadService.AIProvider.OPENAI.name,
+            ctx.getString(R.string.ai_provider_mimo) to helium314.keyboard.latin.utils.ProofreadService.AIProvider.MIMO.name
         )
         var selectedProvider by remember { mutableStateOf(service.getProvider().name) }
         ListPreference(
@@ -355,6 +356,35 @@ fun createAdvancedSettings(context: Context) = listOfNotNull(
                     ) {
                         Text(stringResource(R.string.get_groq_key))
                     }
+                }
+            )
+        }
+    },
+    Setting(context, SettingsWithoutKey.MIMO_TOKEN, R.string.mimo_token_title, R.string.mimo_token_summary) { setting ->
+        var showDialog by rememberSaveable { mutableStateOf(false) }
+        val ctx = LocalContext.current
+        val service = remember { helium314.keyboard.latin.utils.ProofreadService(ctx) }
+        var hasToken by remember { mutableStateOf(service.getMimoToken() != null) }
+
+        Preference(
+            name = setting.title,
+            description = if (hasToken) "Key set" else "Not set",
+            onClick = { showDialog = true }
+        )
+        if (showDialog) {
+            TextInputDialog(
+                onDismissRequest = { showDialog = false },
+                textInputLabel = { Text(stringResource(R.string.mimo_token_hint)) },
+                initialText = service.getMimoToken() ?: "",
+                onConfirmed = {
+                    service.setMimoToken(it)
+                    hasToken = true
+                },
+                title = { Text(stringResource(R.string.mimo_token_title)) },
+                neutralButtonText = if (hasToken) stringResource(R.string.delete) else null,
+                onNeutral = {
+                    service.setMimoToken(null)
+                    hasToken = false
                 }
             )
         }
@@ -448,6 +478,23 @@ fun createAdvancedSettings(context: Context) = listOfNotNull(
         val service = remember { helium314.keyboard.latin.utils.ProofreadService(ctx) }
         val languageNames = ctx.resources.getStringArray(helium314.keyboard.latin.R.array.translate_language_names)
         val languageCodes = ctx.resources.getStringArray(helium314.keyboard.latin.R.array.translate_language_codes)
+        val items = languageNames.zip(languageCodes)
+        var selectedLanguage by remember { mutableStateOf(service.getTargetLanguage()) }
+        ListPreference(
+            setting = setting,
+            items = items,
+            default = selectedLanguage,
+            onChanged = { newLanguage ->
+                service.setTargetLanguage(newLanguage)
+                selectedLanguage = newLanguage
+            }
+        )
+    },
+    Setting(context, SettingsWithoutKey.MIMO_TARGET_LANGUAGE, R.string.mimo_target_language_title, R.string.mimo_target_language_summary) { setting ->
+        val ctx = LocalContext.current
+        val service = remember { helium314.keyboard.latin.utils.ProofreadService(ctx) }
+        val languageNames = ctx.resources.getStringArray(helium314.keyboard.latin.R.array.translate_language_names_mimo)
+        val languageCodes = ctx.resources.getStringArray(helium314.keyboard.latin.R.array.translate_language_codes_mimo)
         val items = languageNames.zip(languageCodes)
         var selectedLanguage by remember { mutableStateOf(service.getTargetLanguage()) }
         ListPreference(

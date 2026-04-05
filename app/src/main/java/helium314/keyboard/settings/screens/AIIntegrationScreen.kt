@@ -67,13 +67,17 @@ private fun StandardAIIntegrationScreen(onClickBack: () -> Unit) {
                 add(SettingsWithoutKey.GEMINI_MODEL)
                 add(SettingsWithoutKey.GEMINI_TARGET_LANGUAGE)
             }
-            "OPENAI" -> {
-                add(SettingsWithoutKey.HUGGINGFACE_TOKEN)
-                add(SettingsWithoutKey.HUGGINGFACE_MODEL)
-                add(SettingsWithoutKey.HUGGINGFACE_ENDPOINT)
-                add(SettingsWithoutKey.GEMINI_TARGET_LANGUAGE)
+                "OPENAI" -> {
+                    add(SettingsWithoutKey.HUGGINGFACE_TOKEN)
+                    add(SettingsWithoutKey.HUGGINGFACE_MODEL)
+                    add(SettingsWithoutKey.HUGGINGFACE_ENDPOINT)
+                    add(SettingsWithoutKey.GEMINI_TARGET_LANGUAGE)
+                }
+                "MIMO" -> {
+                    add(SettingsWithoutKey.MIMO_TOKEN)
+                    add(SettingsWithoutKey.MIMO_TARGET_LANGUAGE)
+                }
             }
-        }
     }
 
     SearchSettingsScreen(

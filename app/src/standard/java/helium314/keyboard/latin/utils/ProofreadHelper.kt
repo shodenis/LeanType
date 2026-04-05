@@ -99,6 +99,17 @@ object ProofreadHelper {
                     return
                 }
             }
+            ProofreadService.AIProvider.MIMO -> {
+                if (service.getMimoToken() == null) {
+                    mainHandler.post {
+                        KeyboardSwitcher.getInstance().showToast(
+                            context.getString(R.string.huggingface_no_token),
+                            true
+                        )
+                    }
+                    return
+                }
+            }
         }
 
         if (!allowEmptyInput && text.isBlank()) {

@@ -407,6 +407,23 @@
     <string name="split_toolbar_summary">Separate suggestions from toolbar</string>
     <string name="ai_provider_huggingface">Groq</string>
     <string name="ai_provider_openai">HF/OpenAI-compatible</string>
+    <string name="ai_provider_mimo">Xiaomi MiMo</string>
+    <string name="mimo_token_title">MiMo API key</string>
+    <string name="mimo_token_summary">Bearer token for api.xiaomimimo.com (model: mimo-v2-flash)</string>
+    <string name="mimo_token_hint">API key</string>
+    <string name="mimo_target_language_title">MiMo translation language</string>
+    <string name="mimo_target_language_summary">Target language for translate (English, Russian, or Chinese)</string>
+
+    <string-array name="translate_language_names_mimo">
+        <item>English</item>
+        <item>Russian</item>
+        <item>Chinese (Simplified)</item>
+    </string-array>
+    <string-array name="translate_language_codes_mimo">
+        <item>English</item>
+        <item>Russian</item>
+        <item>Chinese (Simplified)</item>
+    </string-array>
     <string name="huggingface_token_title">API Token</string>
     <string name="huggingface_token_summary">Enter your HuggingFace or OpenAI-compatible API key</string>
     <string name="groq_token_title">API Token</string>
